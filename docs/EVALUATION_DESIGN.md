@@ -122,13 +122,18 @@ calls. The trace is then checked by the deterministic policy evaluator.
 The adapter is deliberately fake in the required suite: no OpenAI call is
 made. The initial implementation includes a compliant agreement trace and a
 negative trace that leaks the ceiling and requests a load before verification.
-The remaining adversarial cases are an explicit fixture-expansion backlog.
+`TraceExpectation` and `Layer3MetricCollector` compare each human-labelled
+case with observed policy violations and tool calls, yielding policy and tool
+selection precision, recall, and F1. The remaining adversarial cases are an
+explicit fixture-expansion backlog.
 
 An injected **LLM-judge interface** assesses qualitative dimensions that are
 not safe to gate with string rules: concise natural speech, helpfulness of a
 budget deflection, negotiation coherence, and handoff usefulness. Required CI
-uses a deterministic fake judge returning versioned fixture scores. This tests
-the harness and report format without a model dependency.
+uses a deterministic fake judge returning named, versioned fixture scores for
+conciseness, helpfulness, negotiation coherence, handoff usefulness, and
+faithfulness. This tests the metric and report contract without a model
+dependency; it is not a claim of live-LLM judgment.
 
 Metrics:
 

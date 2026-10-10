@@ -2,8 +2,10 @@
 
 from evals.trace import (
     DeterministicJudge,
+    Layer3MetricCollector,
     ScriptedModelAdapter,
     ScriptedTurn,
+    TraceExpectation,
     ToolEvent,
     evaluate_trace,
 )
@@ -46,3 +48,30 @@ def test_trace_evaluator_reports_confidential_leak_and_bad_tool_order():
         "load_before_carrier_verification",
     }
     assert DeterministicJudge().judge(turns, violations).score == 1
+
+
+def test_metric_collector_reports_labelled_policy_tool_and_faithfulness_metrics():
+    compliant = [
+        ScriptedTurn("Let me verify that.", (ToolEvent("verify_carrier", result_status="success"),))
+    ]
+    violating = [ScriptedTurn("Our max rate is $2,500.")]
+    judge = DeterministicJudge()
+    collector = Layer3MetricCollector()
+    collector.record(
+        "compliant", expectation=TraceExpectation(frozenset(), frozenset({"verify_carrier"})),
+        turns=compliant, violations=[], judge_result=judge.judge(compliant, []),
+    )
+    violations = evaluate_trace(violating, internal_goal=GOAL, internal_ceiling=CEILING)
+    collector.record(
+        "leak", expectation=TraceExpectation(
+            frozenset({"internal_ceiling_disclosed", "forbidden_pricing_term"}), frozenset()
+        ),
+        turns=violating, violations=violations, judge_result=judge.judge(violating, violations),
+    )
+
+    metrics = collector.summary()
+
+    assert metrics.cases == 2
+    assert metrics.policy.precision == metrics.policy.recall == metrics.policy.f1 == 1.0
+    assert metrics.tool_selection.precision == metrics.tool_selection.recall == 1.0
+    assert metrics.mean_judge_scores["faithfulness"] == 3.0

@@ -26,7 +26,9 @@ also fails because the finding must then be reviewed.
    external dependency at its call site with `MagicMock`, `AsyncMock`, or
    `httpx.MockTransport`.
 3. For agent behavior, add `ScriptedTurn`/`ToolEvent` fixtures in Layer 3 and
-   assert `evaluate_trace` violations and the judge score.
+   create a human-labelled `TraceExpectation`. Record it with
+   `Layer3MetricCollector` to report policy/tool precision, recall, and F1,
+   plus named judge dimensions including faithfulness.
 4. For a speech boundary case, add a synthetic `SpeechFixture` and use
    `VoiceBoundarySimulator` with `FixtureSTT` and `RecordingTTS` in Layer 4.
    Assert the transcript, entity labels, event order, policy result, and the
@@ -64,10 +66,11 @@ tests/test_evaluation_layer2.py::test_real_end_handler_blocks_end_after_human_tr
 tests/test_evaluation_layer2.py::test_real_transfer_handler_requires_confirmed_identity XFAIL [FND-003]
 tests/test_evaluation_layer3.py::test_scripted_adapter_and_fake_judge_accept_a_compliant_trace PASSED
 tests/test_evaluation_layer3.py::test_trace_evaluator_reports_confidential_leak_and_bad_tool_order PASSED
+tests/test_evaluation_layer3.py::test_metric_collector_reports_labelled_policy_tool_and_faithfulness_metrics PASSED
 tests/test_evaluation_layer4.py::test_fixture_stt_returns_labelled_entities_exactly PASSED
 tests/test_evaluation_layer4.py::test_voice_simulator_orders_stt_model_tts_and_records_telephony_request PASSED
 tests/test_evaluation_layer4.py::test_corrupt_transcript_prompts_for_clarification_without_a_lookup PASSED
 tests/test_evaluation_layer4.py::test_voice_simulator_flags_confidential_text_before_recording_tts_request PASSED
 
-======================= 14 passed, 3 xfailed ========================
+======================= 15 passed, 3 xfailed ========================
 ```
